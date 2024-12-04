@@ -7,7 +7,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node . -h",
-    "build": "babel app --out-dir dist"
+    "build": "npx babel app --out-dir dist",
+    "prepublishOnly": "yarn build"
   },
   "repository": {
     "type": "",
