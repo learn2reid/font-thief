@@ -21,7 +21,7 @@ const decode = {
         const ttf2woff2 = (await import('ttf2woff2')).default;
         return ttf2woff2(input);
     },
-    '.woff': woff.decode
+    '.woff': async (input) => woff.decode(input)
 };
 
 let FONTDIR = null;
@@ -38,7 +38,7 @@ function logResp(resp) {
     }
 }
 
-function convert(name, format) {
+async function convert(name, format) {
     if (!FORMATS.includes(format)) {
         return;
     }
@@ -51,13 +51,14 @@ function convert(name, format) {
     const decoder = decode[ ext ];
 
     if (decoder) {
-        decoder(input).then((decoded) => {
+        try {
+            const decoded = await decoder(input);
             fs.writeFileSync(output, decoded);
             fs.unlinkSync(file);
             utilities.o('log', `Converted to ${format}`.green);
-        }).catch((err) => {
+        } catch (err) {
             utilities.o('log', `Error converting ${name}: ${err.message}`.red.bold);
-        });
+        }
     } else {
         utilities.o('log', `No decoder found for ${ext}`.red);
     }
