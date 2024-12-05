@@ -1,40 +1,36 @@
 #!/usr/bin/env node
 
-const utilities = require('./utilities');
-const woff = require('./woff2sfnt');
-
+import utilities from './utilities.js';
+import woff from './woff2sfnt.js';
 import fs from 'fs-extra';
 import yargs from 'yargs';
 import path from 'path';
 import pkg from '../package.json';
-
 import puppeteer from 'puppeteer';
 import isUrl from 'is-url';
-
 import slug from 'url-slug';
 import http from 'http-https';
-
-import woff2 from 'woff2';
-
+import { readFile, writeFile } from 'node:fs/promises';
 
 const currentDir = process.cwd();
 const OPTIONS = {};
-const FORMATS = ['ttf', 'otf'];
+const FORMATS = [ 'ttf', 'otf' ];
+
 const decode = {
-    '.woff2': woff2,
-    '.woff': woff
+    '.woff2': async (input) => {
+        const ttf2woff2 = (await import('ttf2woff2')).default;
+        return ttf2woff2(input);
+    },
+    '.woff': woff.decode
 };
 
 let FONTDIR = null;
-
 const foundFonts = new Set();
-
 
 function logResp(resp) {
     if ('font' === resp.request().resourceType()) {
         const url = resp.url();
         const name = path.basename(url);
-
         foundFonts.add({
             url,
             name
@@ -52,28 +48,27 @@ function convert(name, format) {
     const input = fs.readFileSync(file);
     const output = file.replace(ext, `.${format}`);
 
-
-    const decoder = decode[ext];
+    const decoder = decode[ ext ];
 
     if (decoder) {
-        fs.writeFileSync(output, decoder.decode(input));
-        fs.unlink(file);
-        utilities.o('log', `Converted to ${format}`.green);
-
+        decoder(input).then((decoded) => {
+            fs.writeFileSync(output, decoded);
+            fs.unlinkSync(file);
+            utilities.o('log', `Converted to ${format}`.green);
+        }).catch((err) => {
+            utilities.o('log', `Error converting ${name}: ${err.message}`.red.bold);
+        });
+    } else {
+        utilities.o('log', `No decoder found for ${ext}`.red);
     }
-
-
 }
 
-function downloadFonts({name, url}) {
-
+function downloadFonts({ name, url }) {
     const file = fs.createWriteStream(`${FONTDIR}/${name}`);
-
 
     const request = http.get(url);
 
     request.on('response', response => {
-
         response.pipe(file);
     });
 
@@ -87,22 +82,19 @@ function downloadFonts({name, url}) {
         }
     });
 
-
     file.on('error', (err) => {
         utilities.o('log', `Error! ${err}`.red.bold);
         file.end();
     });
-
 }
-function listFoundFonts() {
 
+function listFoundFonts() {
     const size = foundFonts.size;
 
     if (size === 0) {
         utilities.o('log', `Found no fonts:`.yellow.bold);
     } else {
-
-        const rows = [...foundFonts]
+        const rows = [ ...foundFonts ]
             .map(font => font.name)
             .join('\n');
 
@@ -113,13 +105,11 @@ function listFoundFonts() {
         FONTDIR = path.join(currentDir, `/font-thief-${slug(OPTIONS.site)}`);
         !fs.existsSync(FONTDIR) && fs.mkdirSync(FONTDIR);
         foundFonts.forEach(downloadFonts);
-
     }
-
 }
-function getPage(url) {
 
-    (async() => {
+function getPage(url) {
+    (async () => {
         const browser = await puppeteer.launch({
             ignoreHTTPSErrors: true
         });
@@ -134,53 +124,39 @@ function getPage(url) {
         } catch (e) {
             utilities.o('log', `ERROR: ${e.message}`.red.bold);
         }
-
-
     })();
 }
 
-
 function run() {
-
     utilities.title('FONT THIEF');
 
     if (OPTIONS.site) {
-
         const url = OPTIONS.site;
 
         if (!isUrl(url)) {
-
             utilities.o('log', `Not a valid url: ${url}`.red.bold);
-
             return;
         }
         getPage(url);
-
     } else {
         utilities.o('log', `Url not provided.`.red.bold);
     }
 
     utilities.exitGraceful();
-
 }
 
 function getOptions() {
-
     let argv = yargs
         .version(pkg.version)
         .usage(`Usage: $0 -s [url]`)
         .option('convert', {
-            alias: [
-                'c',
-            ],
+            alias: [ 'c' ],
             description: 'Convert fonts to format. Currently supported: ' + FORMATS.join(', '),
             type: 'string',
             default: 'otf'
         })
         .option('site', {
-            alias: [
-                's',
-            ],
+            alias: [ 's' ],
             description: 'Site to loot',
             type: 'string',
             demand: true,
@@ -194,7 +170,6 @@ function getOptions() {
     OPTIONS.convert = argv.convert;
 
     run();
-
 }
 
 getOptions();

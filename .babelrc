@@ -1,11 +1,17 @@
 {
-  "presets": [
-    [
-      "@babel/preset-env", {
-        "targets": {
-          "node": "current"
-        }
-      }
-    ]
-  ]
+	"ignore": ["node_modules/**/*"],
+
+	"presets": [
+		[
+			"@babel/preset-env",
+			{
+				"targets": {
+					"node": "current"
+				},
+				"loose": true,
+				"modules": false
+			}
+		]
+	],
+	"plugins": ["@babel/plugin-transform-modules-commonjs"]
 }

@@ -2,11 +2,8 @@
 "use strict";
 
 var _fsExtra = _interopRequireDefault(require("fs-extra"));
-
 var _colors = _interopRequireDefault(require("colors"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 module.exports = {
   fileExists: function (filePath) {
     try {
