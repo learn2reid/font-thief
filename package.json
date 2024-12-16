@@ -30,7 +30,7 @@
     "is-url": "^1.2.4",
     "pako": "^2.1.0",
     "path": "^0.12.7",
-    "puppeteer": "^23.10.1",
+    "puppeteer": "^23.10.4",
     "ttf2woff2": "^6.0.1",
     "underscore": "^1.13.7",
     "url-slug": "^4.0.1",
