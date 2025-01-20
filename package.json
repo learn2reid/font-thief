@@ -25,7 +25,7 @@
     "@babel/preset-env": "^7.26.0",
     "@babel/register": "^7.25.9",
     "colors": "^1.4.0",
-    "fs-extra": "^11.2.0",
+    "fs-extra": "^11.3.0",
     "http-https": "^1.0.0",
     "is-url": "^1.2.4",
     "pako": "^2.1.0",
